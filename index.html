@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="VapeTracker"/>
+<meta name="theme-color" content="#07111a"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>VapeTracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#07111a;--bg2:#0f1923;--border:#1e2d3d;--text:#e2eaf2;--muted:#5a7a94;
+  --blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--violet:#8b5cf6;--orange:#f97316;
+  --safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',system-ui,sans-serif;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;gap:0;}
+.login-logo{font-size:60px;margin-bottom:16px;}
+.login-brand{font-weight:800;font-size:26px;letter-spacing:1px;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:36px;}
+.login-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-bottom:28px;}
+.login-card{border-radius:16px;padding:18px 14px;text-align:center;cursor:pointer;border:2px solid transparent;transition:border-color .2s,transform .15s;}
+.login-card:active{transform:scale(.97);}
+.login-card-admin{background:#8b5cf614;border-color:#8b5cf630;}
+.login-card-employe{background:#3b82f614;border-color:#3b82f630;}
+.login-card.selected-admin{border-color:var(--violet)!important;}
+.login-card.selected-employe{border-color:var(--blue)!important;}
+.login-card-ico{font-size:32px;margin-bottom:8px;}
+.login-card-title{font-weight:800;font-size:14px;margin-bottom:3px;}
+.login-card-desc{font-size:10px;color:var(--muted);line-height:1.4;}
+.login-form{width:100%;display:flex;flex-direction:column;gap:12px;}
+.login-input{background:var(--bg2);border:2px solid var(--border);border-radius:14px;color:var(--text);padding:14px 18px;font-size:16px;font-family:'JetBrains Mono',monospace;width:100%;text-align:center;outline:none;letter-spacing:3px;}
+.login-input:focus{border-color:var(--blue);}
+.login-err{color:var(--red);font-size:12px;font-weight:700;text-align:center;min-height:16px;}
+
+/* SYNC BANNER */
+.sync-banner{background:#22c55e14;border-bottom:1px solid #22c55e33;padding:6px 16px;font-size:11px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.sync-banner.offline{background:#ef444414;border-color:#ef444433;color:var(--red);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* HEADER */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:calc(var(--safe-top)+10px) 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hdr-title{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:.5px;}
+.hdr-right{display:flex;align-items:center;gap:6px;}
+.role-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;}
+.role-admin{background:#8b5cf622;color:var(--violet);border:1px solid #8b5cf644;}
+.role-employe{background:#3b82f622;color:var(--blue);border:1px solid #3b82f644;}
+
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:16px 14px 28px;}
+
+/* NAV */
+.nav{background:var(--bg2);border-top:1px solid var(--border);display:flex;padding:8px 0 calc(var(--safe-bot)+4px);flex-shrink:0;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 2px;font-family:'Syne',system-ui,sans-serif;}
+.nav-btn .ico{font-size:19px;line-height:1;}
+.nav-btn .lbl{font-size:8px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;}
+.nav-btn.active .lbl{color:var(--blue);}
+.nav-btn:not(.active) .lbl,.nav-btn:not(.active) .ico{color:var(--muted);opacity:.5;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+.stat-label{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:.7px;text-transform:uppercase;margin-bottom:4px;}
+.stat-val{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:16px;line-height:1.2;}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+
+/* MONTH CARD */
+.month-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;}
+.month-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.month-card-title{font-weight:800;font-size:14px;}
+.month-benef-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.benef-block{border-radius:11px;padding:12px 14px;}
+.benef-block-lbl{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px;}
+.benef-block-val{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;}
+.benef-block-sub{font-size:10px;margin-top:3px;opacity:.7;}
+.benef-block-gros{background:#8b5cf614;border:1px solid #8b5cf630;}
+.benef-block-detail{background:#3b82f614;border:1px solid #3b82f630;}
+.benef-total-row{background:var(--bg);border-radius:10px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;}
+.benef-total-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;}
+.benef-total-val{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:17px;color:var(--green);}
+.split-bar{height:6px;border-radius:99px;background:var(--border);overflow:hidden;margin-top:10px;}
+.split-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--blue));}
+
+/* TAGS */
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.3px;}
+.tag-blue{background:#3b82f618;color:var(--blue);border:1px solid #3b82f633;}
+.tag-green{background:#22c55e18;color:var(--green);border:1px solid #22c55e33;}
+.tag-amber{background:#f59e0b18;color:var(--amber);border:1px solid #f59e0b33;}
+.tag-red{background:#ef444418;color:var(--red);border:1px solid #ef444433;}
+.tag-violet{background:#8b5cf618;color:var(--violet);border:1px solid #8b5cf633;}
+.tag-smoke{background:#6b728018;color:#9ca3af;border:1px solid #6b728033;}
+.tag-orange{background:#f9731618;color:var(--orange);border:1px solid #f9731633;}
+.tag-teal{background:#2dd4bf18;color:#2dd4bf;border:1px solid #2dd4bf33;}
+
+/* BUTTONS */
+.btn{border-radius:10px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Syne',system-ui,sans-serif;border:none;transition:opacity .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+.btn:active{opacity:.7;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-green{background:#16612d;color:var(--green);border:1px solid #22c55e55;}
+.btn-amber{background:#7c3a00;color:var(--amber);border:1px solid #f59e0b55;}
+.btn-red{background:#7c0f0f;color:var(--red);border:1px solid #ef444455;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-violet{background:#4c1d95;color:var(--violet);border:1px solid #8b5cf655;}
+.btn-teal{background:#0f3d3d;color:#2dd4bf;border:1px solid #2dd4bf55;}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:8px;}
+.btn-full{width:100%;}
+
+/* FORM */
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.6px;text-transform:uppercase;}
+.field input,.field select{background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:11px 13px;font-size:14px;outline:none;font-family:'Syne',system-ui,sans-serif;-webkit-appearance:none;width:100%;}
+.field input:focus,.field select:focus{border-color:var(--blue);}
+
+/* SHEET */
+.overlay{position:fixed;inset:0;background:#000c;z-index:100;display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s;}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--border);width:100%;max-height:93dvh;overflow-y:auto;padding:0 0 calc(var(--safe-bot)+16px);animation:slidein .25s cubic-bezier(.32,0,.67,0);}
+@keyframes slidein{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:12px auto 0;}
+.sheet-header{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 12px;}
+.sheet-title{font-weight:800;font-size:16px;}
+.sheet-body{padding:0 18px;display:flex;flex-direction:column;gap:12px;}
+.sheet-footer{padding:14px 18px 0;display:flex;gap:8px;}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:7px 8px;border-bottom:1px solid var(--border);text-align:left;}
+.tbl td{padding:9px 8px;border-bottom:1px solid #1e2d3d22;}
+.tbl tfoot td{border-top:2px solid var(--border);font-weight:800;padding:9px 8px;}
+
+/* BAR CHART */
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:72px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:4px 4px 0 0;min-height:2px;}
+.bar-lbl{font-size:9px;color:var(--muted);font-family:monospace;}
+
+/* RAPPORT */
+.rapport-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.action-card{border-radius:14px;padding:14px 12px;text-align:center;cursor:pointer;border:1px solid transparent;transition:transform .15s;}
+.action-card:active{transform:scale(.96);}
+.action-card-ico{font-size:26px;margin-bottom:6px;}
+.action-card-title{font-weight:800;font-size:12px;margin-bottom:2px;}
+.action-card-desc{font-size:10px;opacity:.7;line-height:1.3;}
+.ac-manual{background:#3b82f614;border-color:#3b82f630;color:var(--blue);}
+.ac-photo{background:#2dd4bf14;border-color:#2dd4bf30;color:#2dd4bf;}
+.ac-zero{background:#6b728014;border-color:#6b728030;color:#9ca3af;}
+.rapport-section{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.rapport-section-title{font-weight:800;font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.vente-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.vente-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.vente-remove{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:6px;}
+.gift-banner{background:#f9731614;border:1px solid #f9731630;border-radius:9px;padding:8px 12px;font-size:11px;color:var(--orange);margin-top:6px;}
+
+/* SCAN */
+.scan-overlay{position:fixed;inset:0;background:#000e;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;}
+.scan-spinner{width:48px;height:48px;border:4px solid var(--border);border-top:4px solid var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HISTORIQUE */
+.rday-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer;}
+.rday-card:active{border-color:var(--blue);}
+.rday-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.rday-date{font-weight:800;font-size:14px;}
+.rday-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;}
+.rday-stat{background:var(--bg);border-radius:8px;padding:7px 8px;}
+.rday-stat-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:2px;}
+.rday-stat-val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;}
+
+/* RAPPORT DETAIL */
+.vente-ligne{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.vente-ligne-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.vente-ligne-prod{font-weight:800;font-size:13px;}
+.vl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.vl-cell{background:var(--bg);border-radius:7px;padding:6px 8px;text-align:center;}
+.vl-cell-lbl{font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:2px;}
+.vl-cell-val{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:11px;}
+
+/* PROD */
+.prod-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:10px;}
+.prod-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.prod-name{font-weight:800;font-size:14px;margin-bottom:4px;}
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.prod-cell{background:var(--bg);border-radius:8px;padding:7px 9px;}
+.prod-cell-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:2px;}
+.prod-cell-val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;}
+.stock-move-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.sec-title{font-weight:800;font-size:16px;}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:32px 0;line-height:1.8;}
+.loading{text-align:center;color:var(--muted);font-size:13px;padding:40px 0;}
+
+/* DEPENSES */
+.depense-card{background:var(--bg2);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:10px;}
+.depense-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);}
+.depense-cat{font-weight:700;font-size:13px;}
+.depense-montant{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:var(--red);}
+.bilan-card{border-radius:14px;padding:16px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);}
+.bilan-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.bilan-label{font-size:12px;color:var(--muted);font-weight:600;}
+.bilan-val{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;}
+.bilan-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;}
+.bilan-total-label{font-weight:800;font-size:14px;}
+.bilan-total-val{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:20px;}
+
+/* DEPOT */
+.depot-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.depot-card-open{border-color:#f59e0b55;}
+.depot-card-closed{border-color:#22c55e55;opacity:.8;}
+.depot-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.depot-lieu{font-weight:800;font-size:14px;}
+.depot-progress{background:var(--bg);border-radius:8px;padding:8px 10px;margin-bottom:10px;}
+.depot-progress-bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:6px;}
+.depot-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--amber),var(--green));transition:width .4s;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">💨</div>
+  <div class="login-brand">VapeTracker</div>
+  <div class="login-sub">Choisissez votre compte</div>
+  <div class="login-cards">
+    <div class="login-card login-card-admin" id="card-admin" onclick="selectRole('admin')">
+      <div class="login-card-ico">👑</div>
+      <div class="login-card-title">Admin</div>
+      <div class="login-card-desc">Accès complet dashboard & stats</div>
+    </div>
+    <div class="login-card login-card-employe" id="card-employe" onclick="selectRole('employe')">
+      <div class="login-card-ico">👤</div>
+      <div class="login-card-title">Employé</div>
+      <div class="login-card-desc">Rapport journalier uniquement</div>
+    </div>
+  </div>
+  <div class="login-form" id="login-form" style="display:none">
+    <div class="field">
+      <label id="login-role-label">Mot de passe</label>
+      <input class="login-input" type="password" id="login-pw" placeholder="••••••••••" maxlength="30" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <button class="btn btn-primary btn-full" style="padding:14px;font-size:15px" onclick="doLogin()">Se connecter</button>
+    <button class="btn btn-ghost btn-full" onclick="backToSelect()">← Retour</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="hdr">
+    <div class="hdr-title">💨 VapeTracker <span id="role-badge" class="role-badge"></span></div>
+    <div class="hdr-right">
+      <button class="btn btn-amber btn-sm" id="btn-stock" onclick="openModal('modal-stock-in')" style="display:none">+ Stock</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">🚪</button>
+    </div>
+  </div>
+  <div class="sync-banner" id="sync-banner"><div class="sync-dot"></div><span id="sync-text">Synchronisation...</span></div>
+  <div class="content" id="content"></div>
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-rapport" onclick="goTab('rapport')"><span class="ico">📋</span><span class="lbl">Rapport</span></button>
+    <button class="nav-btn" id="nav-dashboard" onclick="goTab('dashboard')" style="display:none"><span class="ico">📊</span><span class="lbl">Dashboard</span></button>
+    <button class="nav-btn" id="nav-depots" onclick="goTab('depots')"><span class="ico">🏪</span><span class="lbl">Dépôts</span></button>
+    <button class="nav-btn" id="nav-produits" onclick="goTab('produits')" style="display:none"><span class="ico">📦</span><span class="lbl">Produits</span></button>
+    <button class="nav-btn" id="nav-stats" onclick="goTab('stats')" style="display:none"><span class="ico">📈</span><span class="lbl">Stats</span></button>
+    <button class="nav-btn" id="nav-depenses" onclick="goTab('depenses')" style="display:none"><span class="ico">💸</span><span class="lbl">Dépenses</span></button>
+    <button class="nav-btn" id="nav-historique" onclick="goTab('historique')"><span class="ico">🗂</span><span class="lbl">Histo</span></button>
+  </nav>
+</div>
+
+<!-- SCAN OVERLAY -->
+<div class="scan-overlay" id="scan-overlay" style="display:none">
+  <div class="scan-spinner"></div>
+  <div style="font-size:14px;font-weight:700;text-align:center" id="scan-status">🤖 L'IA analyse votre cahier...</div>
+  <div style="font-size:11px;color:var(--muted);text-align:center">Détection des ventes en cours</div>
+</div>
+<input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)"/>
+
+<!-- MODAL STOCK IN -->
+<div class="overlay" id="modal-stock-in" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">📦 Entrée de stock</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-stock-in')">✕</button></div>
+    <div class="sheet-body">
+      <div class="field"><label>Produit</label><select id="in-product"><option value="">— Choisir —</option></select></div>
+      <div class="grid2">
+        <div class="field"><label>Quantité reçue</label><input type="number" id="in-qty" min="1" placeholder="ex: 20"/></div>
+        <div class="field"><label>Date</label><input type="date" id="in-date"/></div>
+      </div>
+      <div class="field"><label>Note (optionnel)</label><input type="text" id="in-note" placeholder="ex: Commande fournisseur"/></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-stock-in')">Annuler</button>
+      <button class="btn btn-amber" style="flex:2" onclick="recordStockIn()">+ Ajouter au stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOUVEAU PRODUIT -->
+<div class="overlay" id="modal-add-prod" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">➕ Nouveau produit</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-prod')">✕</button></div>
+    <div class="sheet-body">
+      <div class="field"><label>Nom du modèle</label><input type="text" id="np-name" placeholder="ex: Elf Bar 600"/></div>
+      <div class="grid2">
+        <div class="field"><label>Catégorie</label><select id="np-cat"><option>Puff</option><option>Pod Mod</option><option>E-liquide</option><option>Accessoire</option><option>Autre</option></select></div>
+        <div class="field"><label>Stock initial</label><input type="number" id="np-stock" placeholder="0" min="0"/></div>
+      </div>
+      <div class="field"><label>Prix de revient (F CFA)</label><input type="number" id="np-cost" placeholder="ex: 2500"/></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add-prod')">Annuler</button>
+      <button class="btn btn-primary" style="flex:2" onclick="addProduct()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT PRODUIT -->
+<div class="overlay" id="modal-edit-prod" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">✎ Modifier produit</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-edit-prod')">✕</button></div>
+    <div class="sheet-body">
+      <input type="hidden" id="ep-id"/>
+      <div class="field"><label>Nom</label><input type="text" id="ep-name"/></div>
+      <div class="grid2">
+        <div class="field"><label>Catégorie</label><select id="ep-cat"><option>Puff</option><option>Pod Mod</option><option>E-liquide</option><option>Accessoire</option><option>Autre</option></select></div>
+        <div class="field"><label>Stock actuel</label><input type="number" id="ep-stock" min="0"/></div>
+      </div>
+      <div class="field"><label>Prix de revient (F CFA)</label><input type="number" id="ep-cost"/></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-edit-prod')">Annuler</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveEditProduct()">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL RAPPORT -->
+<div class="overlay" id="modal-rapport-detail" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title" id="mrd-title">Rapport</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-rapport-detail')">✕</button></div>
+    <div class="sheet-body" id="mrd-body" style="padding-bottom:8px"></div>
+    <div class="sheet-footer" id="mrd-footer"></div>
+  </div>
+</div>
+
+<!-- MODAL EDIT RAPPORT -->
+<div class="overlay" id="modal-edit-rapport" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">✎ Modifier rapport</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-edit-rapport')">✕</button></div>
+    <div class="sheet-body" id="mer-body" style="padding-bottom:8px"></div>
+    <div class="sheet-footer" id="mer-footer"></div>
+  </div>
+</div>
+
+
+<!-- MODAL NOUVEAU DEPOT -->
+<div class="overlay" id="modal-add-depot" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">🏪 Nouveau dépôt-vente</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-depot')">✕</button></div>
+    <div class="sheet-body">
+      <div class="field"><label>Lieu / Nom du stand</label><input type="text" id="dp-lieu" placeholder="ex: Stand Marché Centre"/></div>
+      <div class="field"><label>Produit</label><select id="dp-product"><option value="">— Choisir —</option></select></div>
+      <div class="grid2">
+        <div class="field"><label>Quantité déposée</label><input type="number" id="dp-qty" min="1" placeholder="ex: 20"/></div>
+        <div class="field"><label>Date dépôt</label><input type="date" id="dp-date"/></div>
+      </div>
+      <div class="field"><label>Prix de vente estimé / unité (F CFA) *</label><input type="number" id="dp-prix-estime" placeholder="ex: 3500" min="0"/></div>
+      <div class="field"><label>Note (optionnel)</label><input type="text" id="dp-note" placeholder="ex: Dépôt mensuel"/></div>
+      <div style="background:#3b82f614;border:1px solid #3b82f630;border-radius:9px;padding:9px 12px;font-size:11px;color:var(--blue)">💡 Le prix estimé sert à calculer la marge lors des versements reçus.</div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add-depot')">Annuler</button>
+      <button class="btn btn-amber" style="flex:2" onclick="createDepot()">📦 Créer le dépôt</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RETOUR DEPOT -->
+<div class="overlay" id="modal-retour-depot" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title" id="mrd2-title">Retour / Vente dépôt</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-retour-depot')">✕</button></div>
+    <div class="sheet-body" id="mrd2-body"></div>
+    <div class="sheet-footer" id="mrd2-footer"></div>
+  </div>
+</div>
+
+<!-- MODAL NOUVELLE DEPENSE MENSUELLE -->
+<div class="overlay" id="modal-add-depenses" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title">💸 Dépenses du mois</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-add-depenses')">✕</button></div>
+    <div class="sheet-body">
+      <div class="field"><label>Mois concerné</label><input type="month" id="dep-mois"/></div>
+      <div id="dep-lignes" style="display:flex;flex-direction:column;gap:10px;margin-top:4px"></div>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="addDepenseLigne()" style="margin-top:4px">+ Ajouter une dépense</button>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add-depenses')">Annuler</button>
+      <button class="btn btn-red" style="flex:2" onclick="saveDepenses()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT DEPENSE -->
+<div class="overlay" id="modal-edit-depenses" style="display:none">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title" id="med-title">✎ Modifier dépenses</span><button class="btn btn-ghost btn-sm" onclick="closeModal('modal-edit-depenses')">✕</button></div>
+    <div class="sheet-body">
+      <div id="med-lignes" style="display:flex;flex-direction:column;gap:10px"></div>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="addEditDepenseLigne()" style="margin-top:4px">+ Ajouter une dépense</button>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-edit-depenses')">Annuler</button>
+      <button class="btn btn-red" style="flex:2" onclick="saveEditDepenses()">💾 Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, push, remove, update }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDEtiv0AdXqcV9tTvLUl0kMniRlo-6rJrI",
+  authDomain: "vapetracker1010.firebaseapp.com",
+  databaseURL: "https://vapetracker1010-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "vapetracker1010",
+  storageBucket: "vapetracker1010.firebasestorage.app",
+  messagingSenderId: "809518599400",
+  appId: "1:809518599400:web:8e20bd316ed52b57c88d5d"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+// ── CONSTANTS ──────────────────────────────────────────────────────────────────
+const PW_ADMIN="Yousshadi1010", PW_EMPLOYE="Nour1010";
+const MONTHS=["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
+const MONTHS_FULL=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let role=null, selectedLoginRole=null;
+let rapportMode="choose";
+let currentRapport={ventes:[]};
+let editingRapportId=null, editVentes=[];
+let currentTab="rapport";
+
+// Data from Firebase (reactive)
+let fbProducts={}, fbSales={}, fbRapports={}, fbMoves={};
+let fbLoaded=false;
+
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+const cfa=n=>Number(n).toLocaleString("fr-FR")+" F";
+const today=()=>new Date().toISOString().slice(0,10);
+const nowMK=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;};
+const pct=(a,b)=>(a+b)===0?0:Math.round((a/(a+b))*100);
+const tag=(t,c)=>`<span class="tag tag-${c}">${t}</span>`;
+const dateLabel=s=>{const d=new Date(s+"T00:00:00");return `${d.getDate()} ${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`;};
+
+// Convertit objet Firebase en array
+const toArr=obj=>obj?Object.entries(obj).map(([k,v])=>({...v,_key:k})):[];
+const getProducts=()=>toArr(fbProducts);
+const getSales=()=>toArr(fbSales);
+const getRapports=()=>toArr(fbRapports);
+const getMoves=()=>toArr(fbMoves);
+const getP=id=>getProducts().find(p=>p.id===+id||p._key===String(id));
+
+// ── FIREBASE SYNC ──────────────────────────────────────────────────────────────
+function initFirebase(){
+  setSyncStatus("sync");
+
+  onValue(ref(db,"products"),(snap)=>{
+    fbProducts=snap.val()||{};
+    // Si vide, initialiser avec données de démo
+    if(Object.keys(fbProducts).length===0){
+      const demo=[
+        {id:1,name:"Elf Bar 600",category:"Puff",costPrice:1500,stock:40},
+        {id:2,name:"Puff Bar Pro",category:"Puff",costPrice:2000,stock:25},
+        {id:3,name:"KadoPod 4000",category:"Pod Mod",costPrice:8000,stock:12},
+      ];
+      demo.forEach(p=>set(ref(db,`products/${p.id}`),p));
+    }
+    fbLoaded=true; setSyncStatus("online"); if(role) render();
+  });
+
+  onValue(ref(db,"sales"),(snap)=>{fbSales=snap.val()||{};if(role)render();});
+  onValue(ref(db,"rapports"),(snap)=>{fbRapports=snap.val()||{};if(role)render();});
+  onValue(ref(db,"moves"),(snap)=>{fbMoves=snap.val()||{};if(role)render();});
+
+  // Détecter online/offline
+  initDepotListener();
+  initDepensesListener();
+  onValue(ref(db,".info/connected"),(snap)=>{
+    setSyncStatus(snap.val()?"online":"offline");
+  });
+}
+
+function setSyncStatus(status){
+  const b=document.getElementById("sync-banner");
+  const t=document.getElementById("sync-text");
+  if(!b)return;
+  if(status==="online"){b.className="sync-banner";t.textContent="🟢 Synchronisé en temps réel";}
+  else if(status==="offline"){b.className="sync-banner offline";t.textContent="🔴 Hors ligne — données locales";}
+  else{b.className="sync-banner";t.textContent="⏳ Synchronisation...";}
+}
+
+// ── FIREBASE WRITE HELPERS ─────────────────────────────────────────────────────
+function fbSetProduct(p){return set(ref(db,`products/${p.id}`),p);}
+function fbDeleteProduct(id){return remove(ref(db,`products/${id}`));}
+function fbAddSale(s){const k=push(ref(db,"sales")).key;return set(ref(db,`sales/${k}`),{...s,_key:k});}
+function fbAddRapport(r){const k=push(ref(db,"rapports")).key;return set(ref(db,`rapports/${k}`),{...r,_key:k});}
+function fbUpdateRapport(key,r){return set(ref(db,`rapports/${key}`),r);}
+function fbAddMove(m){const k=push(ref(db,"moves")).key;return set(ref(db,`moves/${k}`),{...m,_key:k});}
+function fbRemoveSalesByDate(date){
+  const toDelete=getSales().filter(s=>s.date===date);
+  return Promise.all(toDelete.map(s=>remove(ref(db,`sales/${s._key}`))));
+}
+function fbRemoveMovesByDateOut(date){
+  const toDelete=getMoves().filter(m=>m.date===date&&m.type==="out");
+  return Promise.all(toDelete.map(m=>remove(ref(db,`moves/${m._key}`))));
+}
+
+// ── AUTO-LOCK ──────────────────────────────────────────────────────────────────
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&role)logout();});
+
+// ── LOGIN ──────────────────────────────────────────────────────────────────────
+function selectRole(r){
+  selectedLoginRole=r;
+  document.getElementById("card-admin").classList.remove("selected-admin","selected-employe");
+  document.getElementById("card-employe").classList.remove("selected-admin","selected-employe");
+  document.getElementById("card-"+r).classList.add("selected-"+r);
+  document.getElementById("login-role-label").textContent=r==="admin"?"👑 Mot de passe Admin":"👤 Mot de passe Employé";
+  document.getElementById("login-pw").value="";
+  document.getElementById("login-err").textContent="";
+  document.getElementById("login-form").style.display="flex";
+  setTimeout(()=>document.getElementById("login-pw").focus(),300);
+}
+window.selectRole=selectRole;
+
+function backToSelect(){
+  selectedLoginRole=null;
+  document.getElementById("login-form").style.display="none";
+  document.getElementById("card-admin").classList.remove("selected-admin");
+  document.getElementById("card-employe").classList.remove("selected-employe");
+}
+window.backToSelect=backToSelect;
+
+function doLogin(){
+  const pw=document.getElementById("login-pw").value;
+  if(selectedLoginRole==="admin"&&pw===PW_ADMIN){role="admin";startApp();}
+  else if(selectedLoginRole==="employe"&&pw===PW_EMPLOYE){role="employe";startApp();}
+  else{document.getElementById("login-err").textContent="Mot de passe incorrect.";document.getElementById("login-pw").value="";}
+}
+window.doLogin=doLogin;
+
+function startApp(){
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app").style.display="flex";
+  const b=document.getElementById("role-badge");
+  if(role==="admin"){b.className="role-badge role-admin";b.textContent="👑 Admin";}
+  else{b.className="role-badge role-employe";b.textContent="👤 Employé";}
+  ["nav-dashboard","nav-produits","nav-stats"].forEach(id=>document.getElementById(id).style.display=role==="admin"?"flex":"none");
+  document.getElementById("nav-depots").style.display="flex";
+  document.getElementById("nav-depenses").style.display=role==="admin"?"flex":"none";
+  document.getElementById("btn-stock").style.display=role==="admin"?"inline-flex":"none";
+  currentTab=role==="admin"?"dashboard":"rapport";
+  rapportMode="choose";
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("nav-"+currentTab)?.classList.add("active");
+  render();
+}
+
+function logout(){
+  role=null;selectedLoginRole=null;rapportMode="choose";currentRapport={ventes:[]};
+  document.getElementById("app").style.display="none";
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("login-form").style.display="none";
+  document.getElementById("card-admin").classList.remove("selected-admin");
+  document.getElementById("card-employe").classList.remove("selected-employe");
+  document.getElementById("login-pw").value="";
+}
+window.logout=logout;
+
+// ── TABS ───────────────────────────────────────────────────────────────────────
+function goTab(t){
+  currentTab=t;
+  if(t==="rapport") rapportMode="choose";
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("nav-"+t)?.classList.add("active");
+  render();
+}
+window.goTab=goTab;
+
+function openModal(id){
+  if(id==="modal-stock-in"){
+    const el=document.getElementById("in-product");
+    el.innerHTML='<option value="">— Choisir —</option>';
+    getProducts().forEach(p=>{el.innerHTML+=`<option value="${p.id}">${p.name} (stock: ${p.stock})</option>`;});
+    document.getElementById("in-date").value=today();
+    document.getElementById("in-qty").value="";
+    document.getElementById("in-note").value="";
+  }
+  document.getElementById(id).style.display="flex";
+}
+window.openModal=openModal;
+function closeModal(id){document.getElementById(id).style.display="none";}
+window.closeModal=closeModal;
+
+// ── STOCK IN ───────────────────────────────────────────────────────────────────
+async function recordStockIn(){
+  const pid=document.getElementById("in-product").value;
+  const qty=+document.getElementById("in-qty").value;
+  const date=document.getElementById("in-date").value;
+  const note=document.getElementById("in-note").value.trim()||"Approvisionnement";
+  const p=getP(pid);
+  if(!p||!qty)return alert("Remplis tous les champs !");
+  const updated={...p,stock:p.stock+qty};
+  await fbSetProduct(updated);
+  await fbAddMove({productId:p.id,productName:p.name,type:"in",qty,date,note});
+  closeModal("modal-stock-in");
+}
+window.recordStockIn=recordStockIn;
+
+// ── PRODUCTS ───────────────────────────────────────────────────────────────────
+async function addProduct(){
+  const name=document.getElementById("np-name").value.trim();
+  const cost=+document.getElementById("np-cost").value;
+  const cat=document.getElementById("np-cat").value;
+  const stock=+document.getElementById("np-stock").value||0;
+  if(!name||!cost)return alert("Nom et prix de revient obligatoires !");
+  const id=Date.now();
+  await fbSetProduct({id,name,category:cat,costPrice:cost,stock});
+  closeModal("modal-add-prod");
+}
+window.addProduct=addProduct;
+
+function openEditProduct(id){
+  const p=getP(id);if(!p)return;
+  document.getElementById("ep-id").value=p.id;
+  document.getElementById("ep-name").value=p.name;
+  document.getElementById("ep-cost").value=p.costPrice;
+  document.getElementById("ep-stock").value=p.stock;
+  document.getElementById("ep-cat").value=p.category;
+  openModal("modal-edit-prod");
+}
+window.openEditProduct=openEditProduct;
+
+async function saveEditProduct(){
+  const id=+document.getElementById("ep-id").value;
+  const p=getP(id);if(!p)return;
+  await fbSetProduct({...p,
+    name:document.getElementById("ep-name").value,
+    costPrice:+document.getElementById("ep-cost").value,
+    stock:+document.getElementById("ep-stock").value,
+    category:document.getElementById("ep-cat").value,
+  });
+  closeModal("modal-edit-prod");
+}
+window.saveEditProduct=saveEditProduct;
+
+async function deleteProduct(id){
+  if(!confirm("Supprimer ce produit ?"))return;
+  await fbDeleteProduct(id);
+}
+window.deleteProduct=deleteProduct;
+
+// ── RAPPORT ────────────────────────────────────────────────────────────────────
+function prodOptions(selectedId){
+  return '<option value="">— Choisir —</option>'+getProducts().map(p=>`<option value="${p.id}"${+p.id===+selectedId?" selected":""}>${p.name} (stock: ${p.stock})</option>`).join("");
+}
+function addVente(type){currentRapport.ventes.push({id:Date.now(),productId:"",qty:1,price:0,type});renderRapport();}
+window.addVente=addVente;
+function removeVente(id){currentRapport.ventes=currentRapport.ventes.filter(v=>v.id!==id);renderRapport();}
+window.removeVente=removeVente;
+function updateVente(id,field,value){
+  const v=currentRapport.ventes.find(v=>v.id===id);if(!v)return;
+  v[field]=(field==="qty"||field==="price")?+value:value;
+  if(field==="productId"){const p=getP(value);v.productName=p?p.name:"";}
+  refreshPreview(id);
+}
+window.updateVente=updateVente;
+
+function refreshPreview(id){
+  const v=currentRapport.ventes.find(v=>v.id===id);if(!v)return;
+  const p=getP(v.productId);
+  const el=document.getElementById("prev-"+id);if(!el)return;
+  if(!p||!v.qty){el.style.display="none";return;}
+  el.style.display="block";
+  if(v.price===0){el.innerHTML=`<div class="gift-banner">🎁 Cadeau — Perte: ${cfa(p.costPrice*v.qty)}</div>`;}
+  else{const pr=(v.price-p.costPrice)*v.qty;el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px"><div style="background:var(--bg2);border-radius:7px;padding:6px 8px"><div style="color:var(--muted);font-size:9px;margin-bottom:2px">CA</div><div style="font-family:monospace;font-weight:800">${cfa(v.price*v.qty)}</div></div><div style="background:var(--bg2);border-radius:7px;padding:6px 8px;border:1px solid ${pr>=0?"#22c55e33":"#ef444433"}"><div style="color:var(--muted);font-size:9px;margin-bottom:2px">BÉNÉFICE</div><div style="font-family:monospace;font-weight:800;color:${pr>=0?"var(--green)":"var(--red)"}">${pr>=0?"+":""}${cfa(pr)}</div></div></div>`;}
+}
+
+function venteItemHtml(v){
+  return`<div class="vente-item">
+    <div class="vente-item-head"><span style="font-size:10px;color:var(--muted);font-weight:700">${v.type==="gros"?"⬡ GROS":"◎ DÉTAIL"}</span><button class="vente-remove" onclick="removeVente(${v.id})">✕</button></div>
+    <div class="field" style="margin-bottom:8px"><label>Produit</label><select onchange="updateVente(${v.id},'productId',this.value)">${prodOptions(v.productId)}</select></div>
+    <div class="grid2">
+      <div class="field"><label>Quantité</label><input type="number" min="1" value="${v.qty||""}" placeholder="0" oninput="updateVente(${v.id},'qty',this.value)"/></div>
+      <div class="field"><label>Prix/u (F) — 0=Cadeau</label><input type="number" min="0" value="${v.price===0&&v.productId?"0":v.price||""}" placeholder="0" oninput="updateVente(${v.id},'price',this.value)"/></div>
+    </div>
+    <div id="prev-${v.id}" style="margin-top:8px;display:none"></div>
+  </div>`;
+}
+
+function calcTotals(ventes){
+  return{
+    benefGros:ventes.filter(v=>v.type==="gros"&&!v.isGift).reduce((a,v)=>a+v.profit,0),
+    benefDetail:ventes.filter(v=>v.type==="detail"&&!v.isGift).reduce((a,v)=>a+v.profit,0),
+    perteCadeaux:ventes.filter(v=>v.isGift).reduce((a,v)=>a+Math.abs(v.profit),0),
+    totalProfit:ventes.reduce((a,v)=>a+v.profit,0),
+    totalCA:ventes.filter(v=>!v.isGift).reduce((a,v)=>a+v.price*v.qty,0),
+    nbCadeaux:ventes.filter(v=>v.isGift).length,
+    nbVentes:ventes.length,
+  };
+}
+
+async function validerRapport(){
+  const ventes=currentRapport.ventes;
+  if(!ventes.length)return alert("Ajoute au moins une vente !");
+  for(const v of ventes){
+    if(!v.productId)return alert("Sélectionne un produit pour chaque ligne.");
+    if(!v.qty||v.qty<=0)return alert("Quantité invalide.");
+    const p=getP(v.productId);
+    if(v.qty>p.stock)return alert(`Stock insuffisant pour ${p.name} (stock: ${p.stock})`);
+  }
+  if(!confirm("Valider le rapport du jour ?"))return;
+  const dateStr=today();
+  const ventesF=ventes.map(v=>{const p=getP(v.productId);const isGift=v.price===0;
+    return{...v,productName:p.name,costPrice:p.costPrice,profit:isGift?-p.costPrice*v.qty:(v.price-p.costPrice)*v.qty,isGift};});
+
+  // Mettre à jour stocks
+  for(const v of ventesF){
+    const p=getP(v.productId);
+    await fbSetProduct({...p,stock:p.stock-v.qty});
+    await fbAddMove({productId:p.id,productName:p.name,type:"out",qty:v.qty,date:dateStr,note:v.isGift?"Cadeau":"Vente "+v.type});
+  }
+  // Sauvegarder rapport
+  await fbAddRapport({date:dateStr,ventes:ventesF,totals:calcTotals(ventesF),source:"manual"});
+  // Ajouter aux ventes
+  for(const v of ventesF.filter(v=>!v.isGift)){
+    await fbAddSale({productId:+v.productId,productName:v.productName,qty:v.qty,salePrice:v.price,costPrice:v.costPrice,type:v.type,date:dateStr,profit:v.profit});
+  }
+  currentRapport={ventes:[]};rapportMode="choose";
+  alert("✅ Rapport validé et synchronisé !");render();
+}
+window.validerRapport=validerRapport;
+
+async function validerJourneeVide(){
+  if(!confirm("Confirmer : aucune vente aujourd'hui ?"))return;
+  await fbAddRapport({date:today(),ventes:[],totals:{benefGros:0,benefDetail:0,perteCadeaux:0,totalProfit:0,totalCA:0,nbCadeaux:0,nbVentes:0},source:"zero"});
+  rapportMode="choose";
+  alert("✅ Journée sans vente enregistrée.");render();
+}
+window.validerJourneeVide=validerJourneeVide;
+
+// ── PHOTO IA ───────────────────────────────────────────────────────────────────
+function triggerPhoto(){document.getElementById("photo-input").click();}
+window.triggerPhoto=triggerPhoto;
+
+async function handlePhoto(event){
+  const file=event.target.files[0];if(!file)return;
+  event.target.value="";
+  const base64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(",")[1]);r.readAsDataURL(file);});
+  document.getElementById("scan-overlay").style.display="flex";
+  const productList=getProducts().map(p=>`- "${p.name}" (id:${p.id})`).join("\n");
+  const prompt=`Tu es un assistant qui lit des rapports de vente écrits à la main.\n\nProduits disponibles:\n${productList}\n\nAnalyse cette photo et extrait toutes les ventes. Pour chaque vente:\n- productId: l'id du produit correspondant\n- productName: le nom\n- qty: quantité\n- price: prix unitaire (0 si cadeau)\n- type: "gros" ou "detail"\n\nRéponds UNIQUEMENT en JSON valide sans markdown:\n{"ventes":[{"productId":1,"productName":"Elf Bar 600","qty":2,"price":3500,"type":"detail"}],"note":""}`;
+  try{
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:base64}},{type:"text",text:prompt}]}]})});
+    const data=await resp.json();
+    document.getElementById("scan-overlay").style.display="none";
+    if(data.error){alert("Erreur IA : "+data.error.message);return;}
+    const text=data.content.map(c=>c.text||"").join("");
+    const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
+    if(parsed.ventes&&parsed.ventes.length>0){
+      currentRapport.ventes=parsed.ventes.map(v=>({id:Date.now()+Math.random(),productId:String(v.productId),productName:v.productName||getP(v.productId)?.name||"",qty:+v.qty||1,price:+v.price||0,type:v.type||"detail"}));
+      rapportMode="manual";
+      if(parsed.note)alert("📝 Note IA : "+parsed.note);
+      render();setTimeout(()=>currentRapport.ventes.forEach(v=>refreshPreview(v.id)),100);
+    }else{alert("Aucune vente détectée. Saisis manuellement.");rapportMode="manual";render();}
+  }catch(err){document.getElementById("scan-overlay").style.display="none";alert("Erreur : "+err.message);}
+}
+window.handlePhoto=handlePhoto;
+
+// ── RAPPORT DETAIL ─────────────────────────────────────────────────────────────
+function rapportDetailHtml(r){
+  if(r.source==="zero"||!r.ventes||r.ventes.length===0)return`<div style="text-align:center;padding:24px 0"><div style="font-size:40px;margin-bottom:10px">🏖</div><div style="font-weight:800;font-size:15px;margin-bottom:6px">Journée sans vente</div><div style="color:var(--muted);font-size:12px">Aucune transaction ce jour.</div></div>`;
+  const gros=r.ventes.filter(v=>v.type==="gros"),det=r.ventes.filter(v=>v.type==="detail"),gifts=r.ventes.filter(v=>v.isGift);
+  function lignes(list){
+    if(!list.length)return`<p style="color:var(--muted);font-size:12px;padding:6px 0">Aucune vente.</p>`;
+    return list.map(v=>`<div class="vente-ligne"><div class="vente-ligne-head"><span class="vente-ligne-prod">${v.productName}</span>${v.isGift?tag("🎁 Cadeau","orange"):""}</div><div class="vl-grid"><div class="vl-cell"><div class="vl-cell-lbl">Qté</div><div class="vl-cell-val">${v.qty}</div></div><div class="vl-cell"><div class="vl-cell-lbl">Prix/u</div><div class="vl-cell-val">${v.isGift?"0 F":cfa(v.price)}</div></div><div class="vl-cell" style="border:1px solid ${v.profit>=0?"#22c55e33":"#ef444433"}"><div class="vl-cell-lbl">Bénéfice</div><div class="vl-cell-val" style="color:${v.profit>=0?"var(--green)":"var(--red)"}">${v.profit>=0?"+":""}${cfa(v.profit)}</div></div></div></div>`).join("");
+  }
+  return`<div style="font-size:11px;font-weight:800;color:var(--violet);text-transform:uppercase;margin-bottom:8px">⬡ Ventes en Gros</div>${lignes(gros)}<div style="font-size:11px;font-weight:800;color:var(--blue);text-transform:uppercase;margin:12px 0 8px">◎ Ventes au Détail</div>${lignes(det)}${gifts.length?`<div style="font-size:11px;font-weight:800;color:var(--orange);text-transform:uppercase;margin:12px 0 8px">🎁 Cadeaux</div>${lignes(gifts)}`:""}
+  <div style="background:var(--bg);border-radius:11px;padding:12px;margin-top:14px"><div style="font-weight:800;font-size:11px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">Totaux du jour</div>
+  <div class="grid2" style="gap:8px">${[{l:"Bén. Gros",v:cfa(r.totals.benefGros),c:"var(--violet)"},{l:"Bén. Détail",v:cfa(r.totals.benefDetail),c:"var(--blue)"},{l:"Bénéfice net",v:cfa(r.totals.totalProfit),c:"var(--green)"},{l:"Perte cadeaux",v:cfa(r.totals.perteCadeaux),c:"var(--red)"},{l:"CA total",v:cfa(r.totals.totalCA),c:"var(--text)"},{l:"Cadeaux",v:r.totals.nbCadeaux,c:"var(--orange)"}].map(({l,v,c})=>`<div class="prod-cell"><div class="prod-cell-lbl">${l}</div><div class="prod-cell-val" style="color:${c}">${v}</div></div>`).join("")}</div></div>`;
+}
+
+function openRapportDetail(key){
+  const r=getRapports().find(r=>r._key===key);if(!r)return;
+  document.getElementById("mrd-title").textContent="📋 "+dateLabel(r.date);
+  document.getElementById("mrd-body").innerHTML=rapportDetailHtml(r);
+  const footer=document.getElementById("mrd-footer");
+  footer.innerHTML=role==="admin"&&r.source!=="zero"
+    ?`<button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-rapport-detail')">Fermer</button><button class="btn btn-violet" style="flex:2" onclick="closeModal('modal-rapport-detail');openEditRapport('${key}')">✎ Modifier</button>`
+    :`<button class="btn btn-primary btn-full" onclick="closeModal('modal-rapport-detail')">Fermer</button>`;
+  openModal("modal-rapport-detail");
+}
+window.openRapportDetail=openRapportDetail;
+
+// ── EDIT RAPPORT ───────────────────────────────────────────────────────────────
+function openEditRapport(key){
+  const r=getRapports().find(r=>r._key===key);if(!r)return;
+  editingRapportId=key;editVentes=(r.ventes||[]).map(v=>({...v,id:v.id||Date.now()+Math.random()}));
+  renderEditRapport();openModal("modal-edit-rapport");
+}
+window.openEditRapport=openEditRapport;
+
+function renderEditRapport(){
+  function evHtml(v){return`<div class="vente-item" style="margin-bottom:8px"><div class="vente-item-head"><span style="font-size:10px;color:var(--muted);font-weight:700">${v.type==="gros"?"⬡ GROS":"◎ DÉTAIL"}</span><button class="vente-remove" onclick="removeEditVente(${v.id})">✕</button></div><div class="field" style="margin-bottom:8px"><label>Produit</label><select onchange="updateEditVente(${v.id},'productId',this.value)">${prodOptions(v.productId)}</select></div><div class="grid2"><div class="field"><label>Quantité</label><input type="number" min="1" value="${v.qty}" oninput="updateEditVente(${v.id},'qty',this.value)"/></div><div class="field"><label>Prix/u (F)</label><input type="number" min="0" value="${v.price}" oninput="updateEditVente(${v.id},'price',this.value)"/></div></div></div>`;}
+  document.getElementById("mer-body").innerHTML=`<div style="background:#f59e0b14;border:1px solid #f59e0b33;border-radius:9px;padding:10px 12px;font-size:11px;color:var(--amber);margin-bottom:4px">⚠️ Modification recalcule le stock et bénéfices.</div><div style="font-size:11px;font-weight:800;color:var(--violet);margin-bottom:6px">⬡ GROS</div>${editVentes.filter(v=>v.type==="gros").map(evHtml).join("")}<button class="btn btn-violet btn-sm btn-full" onclick="addEditVente('gros')" style="margin-bottom:12px">+ Ajouter gros</button><div style="font-size:11px;font-weight:800;color:var(--blue);margin-bottom:6px">◎ DÉTAIL</div>${editVentes.filter(v=>v.type==="detail").map(evHtml).join("")}<button class="btn btn-primary btn-sm btn-full" onclick="addEditVente('detail')">+ Ajouter détail</button>`;
+  document.getElementById("mer-footer").innerHTML=`<button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-edit-rapport')">Annuler</button><button class="btn btn-green" style="flex:2" onclick="saveEditRapport()">✅ Sauvegarder</button>`;
+}
+function addEditVente(type){editVentes.push({id:Date.now(),productId:"",qty:1,price:0,type,isGift:false});renderEditRapport();}
+window.addEditVente=addEditVente;
+function removeEditVente(id){editVentes=editVentes.filter(v=>v.id!==id);renderEditRapport();}
+window.removeEditVente=removeEditVente;
+function updateEditVente(id,field,value){
+  const v=editVentes.find(v=>v.id===id);if(!v)return;
+  v[field]=(field==="qty"||field==="price")?+value:value;
+  if(field==="productId"){const p=getP(value);v.productName=p?p.name:"";}
+  if(field==="price")v.isGift=+value===0;
+}
+window.updateEditVente=updateEditVente;
+
+async function saveEditRapport(){
+  const r=getRapports().find(r=>r._key===editingRapportId);if(!r)return;
+  for(const v of editVentes){if(!v.productId)return alert("Sélectionne un produit pour chaque ligne.");}
+  if(!confirm("Sauvegarder les modifications ?"))return;
+  // Remettre l'ancien stock
+  for(const v of (r.ventes||[])){const p=getP(v.productId);if(p)await fbSetProduct({...p,stock:p.stock+v.qty});}
+  await fbRemoveSalesByDate(r.date);
+  await fbRemoveMovesByDateOut(r.date);
+  const ventesF=editVentes.map(v=>{const p=getP(v.productId);const isGift=v.price===0;return{...v,productName:p?p.name:v.productName,costPrice:p?p.costPrice:v.costPrice,profit:isGift?-(p?p.costPrice:v.costPrice)*v.qty:(v.price-(p?p.costPrice:v.costPrice))*v.qty,isGift};});
+  for(const v of ventesF){const p=getP(v.productId);if(p){await fbSetProduct({...p,stock:p.stock-v.qty});await fbAddMove({productId:p.id,productName:p.name,type:"out",qty:v.qty,date:r.date,note:"Vente modifiée"});}}
+  for(const v of ventesF.filter(v=>!v.isGift)){await fbAddSale({productId:+v.productId,productName:v.productName,qty:v.qty,salePrice:v.price,costPrice:v.costPrice,type:v.type,date:r.date,profit:v.profit});}
+  await fbUpdateRapport(editingRapportId,{...r,ventes:ventesF,totals:calcTotals(ventesF)});
+  closeModal("modal-edit-rapport");alert("✅ Rapport modifié !");render();
+}
+window.saveEditRapport=saveEditRapport;
+
+// ── MONTH STATS ────────────────────────────────────────────────────────────────
+function monthStats(key){
+  const ms=getSales().filter(s=>s.date&&s.date.startsWith(key));
+  const g=ms.filter(s=>s.type==="gros"),d=ms.filter(s=>s.type==="detail");
+  return{profit:ms.reduce((a,s)=>a+s.profit,0),ca:ms.reduce((a,s)=>a+s.qty*s.salePrice,0),benefGros:g.reduce((a,s)=>a+s.profit,0),benefDetail:d.reduce((a,s)=>a+s.profit,0),unitsGros:g.reduce((a,s)=>a+s.qty,0),unitsDetail:d.reduce((a,s)=>a+s.qty,0),countGros:g.length,countDetail:d.length,units:ms.reduce((a,s)=>a+s.qty,0),count:ms.length};
+}
+function monthCardHtml(key,label,isCurrent){
+  const m=monthStats(key);const fw=pct(m.benefGros,m.benefDetail);
+  return`<div class="month-card"><div class="month-card-head"><span class="month-card-title">${label}</span>${isCurrent?tag("En cours","green"):""}</div><div class="month-benef-row"><div class="benef-block benef-block-gros"><div class="benef-block-lbl" style="color:var(--violet)">⬡ Gros</div><div class="benef-block-val" style="color:var(--violet)">${cfa(m.benefGros)}</div><div class="benef-block-sub" style="color:var(--violet)">${m.unitsGros} unités · ${m.countGros} ventes</div></div><div class="benef-block benef-block-detail"><div class="benef-block-lbl" style="color:var(--blue)">◎ Détail</div><div class="benef-block-val" style="color:var(--blue)">${cfa(m.benefDetail)}</div><div class="benef-block-sub" style="color:var(--blue)">${m.unitsDetail} unités · ${m.countDetail} ventes</div></div></div><div class="benef-total-row"><span class="benef-total-lbl">💰 Bénéfice total du mois</span><span class="benef-total-val">${cfa(m.profit)}</span></div>${(m.benefGros>0||m.benefDetail>0)?`<div class="split-bar" style="margin-top:10px"><div class="split-bar-fill" style="width:${fw}%"></div></div><div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px"><span style="color:var(--violet)">Gros ${fw}%</span><span style="color:var(--blue)">Détail ${100-fw}%</span></div>`:""}</div>`;
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────────
+function renderRapport(){
+  const el=document.getElementById("content");
+  if(rapportMode==="choose"){
+    el.innerHTML=`<div style="font-weight:800;font-size:16px;margin-bottom:2px">📋 Rapport Journalier</div><div style="font-size:11px;color:var(--muted);margin-bottom:20px">${dateLabel(today())}</div><div style="font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Comment saisir les ventes ?</div><div class="rapport-actions" style="grid-template-columns:1fr 1fr"><div class="action-card ac-manual" onclick="rapportMode='manual';renderRapport()"><div class="action-card-ico">✍️</div><div class="action-card-title" style="color:var(--blue)">Saisie manuelle</div><div class="action-card-desc">Entrer les ventes ligne par ligne</div></div><div class="action-card ac-photo" onclick="triggerPhoto()"><div class="action-card-ico">📷</div><div class="action-card-title" style="color:#2dd4bf">Scanner le cahier</div><div class="action-card-desc">Photo → l'IA détecte les ventes</div></div></div><div class="action-card" style="background:#f59e0b14;border:1px solid #f59e0b30;text-align:center;padding:14px 12px" onclick="goTab('depots')">
+          <div style="font-size:22px;margin-bottom:4px">🏪</div>
+          <div style="font-weight:800;font-size:12px;color:var(--amber)">Dépôt-vente</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Créer ou mettre à jour un dépôt</div>
+        </div>
+        <div class="action-card ac-zero" style="text-align:center;padding:14px 12px" onclick="validerJourneeVide()"><div style="font-size:22px;margin-bottom:4px">🚫</div><div style="font-weight:800;font-size:12px;color:#9ca3af">Journée sans vente</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Enregistrer 0 vente pour aujourd'hui</div></div>`;
+    return;
+  }
+  const v=currentRapport.ventes,g=v.filter(x=>x.type==="gros"),d=v.filter(x=>x.type==="detail");
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><button onclick="rapportMode='choose';currentRapport={ventes:[]};renderRapport()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">←</button><span style="font-weight:800;font-size:16px">📋 Rapport Journalier</span></div><div style="font-size:11px;color:var(--muted);margin-bottom:14px;margin-left:28px">${dateLabel(today())}</div><div class="rapport-section"><div class="rapport-section-title" style="color:var(--violet)">⬡ Ventes en Gros</div>${g.map(venteItemHtml).join("")}<button class="btn btn-violet btn-sm btn-full" onclick="addVente('gros')" style="margin-top:4px">+ Ajouter vente gros</button></div><div class="rapport-section"><div class="rapport-section-title" style="color:var(--blue)">◎ Ventes au Détail</div>${d.map(venteItemHtml).join("")}<button class="btn btn-primary btn-sm btn-full" onclick="addVente('detail')" style="margin-top:4px">+ Ajouter vente détail</button></div>${v.length?`<div class="card"><div style="font-weight:800;font-size:12px;margin-bottom:8px">⚡ Récap en cours</div><div class="grid3"><div class="prod-cell"><div class="prod-cell-lbl">Total</div><div class="prod-cell-val">${v.length}</div></div><div class="prod-cell"><div class="prod-cell-lbl">Gros</div><div class="prod-cell-val" style="color:var(--violet)">${g.length}</div></div><div class="prod-cell"><div class="prod-cell-lbl">Détail</div><div class="prod-cell-val" style="color:var(--blue)">${d.length}</div></div></div></div><button class="btn btn-green btn-full" onclick="validerRapport()" style="padding:14px">✅ Valider le rapport du jour</button>`:`<div class="empty">Ajoute des ventes ou scanne ton cahier 📷</div>`}`;
+  v.forEach(x=>refreshPreview(x.id));
+}
+
+function render(){
+  if(!role)return;
+  if(currentTab==="rapport"){renderRapport();return;}
+  if(currentTab==="depots"){renderDepots();return;}
+  if(currentTab==="depenses"){renderDepenses();return;}
+  const el=document.getElementById("content");
+  const mk=nowMK();const d=new Date();
+  const currentLabel=`${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`;
+
+  if(!fbLoaded){el.innerHTML=`<div class="loading">⏳ Chargement des données...</div>`;return;}
+
+  if(currentTab==="dashboard"){
+    const m=monthStats(mk),totalB=getSales().reduce((a,s)=>a+s.profit,0),low=getProducts().filter(p=>p.stock<=5);
+    const capital=calcCapital();
+    const depMoisDash=getDepensesForMonth(mk);
+    const beneficeReelDash=m.profit-(depMoisDash?.total||0);
+    const cd=Array.from({length:6},(_,i)=>{const dd=new Date(d.getFullYear(),d.getMonth()-5+i,1);const k=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,"0")}`;return{lbl:MONTHS[dd.getMonth()],v:monthStats(k).profit};});
+    const bmax=Math.max(...cd.map(x=>x.v),1);
+    el.innerHTML=`${monthCardHtml(mk,currentLabel,true)}<div class="grid2" style="margin-bottom:12px"><div class="stat-box"><div class="stat-label">Bénéf. net réel (mois)</div><div class="stat-val" style="color:${beneficeReelDash>=0?"var(--green)":"var(--red)"};font-size:14px">${beneficeReelDash>=0?"+":""}${cfa(Math.round(beneficeReelDash))}</div><div class="stat-sub">${depMoisDash?"Dépenses: -"+cfa(depMoisDash.total):"⚠️ Dépenses non saisies"}</div></div><div class="stat-box"><div class="stat-label">CA ce mois</div><div class="stat-val" style="color:var(--blue);font-size:14px">${cfa(m.ca)}</div></div><div class="stat-box"><div class="stat-label">Capital stock</div><div class="stat-val" style="color:var(--violet);font-size:13px">${cfa(capital)}</div><div class="stat-sub">${getProducts().reduce((a,p)=>a+p.stock,0)} unités</div></div><div class="stat-box"><div class="stat-label">Bénéf. brut total</div><div class="stat-val" style="color:var(--green);font-size:13px">${cfa(totalB)}</div></div></div><div class="card"><div style="font-weight:800;font-size:13px;margin-bottom:12px">📈 Bénéfices 6 mois</div><div class="bar-chart">${cd.map((x,i)=>{const h=x.v?Math.round((x.v/bmax)*60):2;return`<div class="bar-col"><div class="bar" style="height:${h}px;background:hsl(${210-i*8},60%,${38+(x.v/bmax)*22}%)"></div><span class="bar-lbl">${x.lbl}</span></div>`;}).join("")}</div></div>${low.length?`<div class="card"><div style="font-weight:800;font-size:13px;margin-bottom:10px">⚠️ Stock faible</div>${low.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;font-weight:600">${p.name}</span>${tag(p.stock+" unités",p.stock===0?"red":"amber")}</div>`).join("")}</div>`:""}`;
+  }
+  else if(currentTab==="produits"){
+    const stockIn=getMoves().filter(m=>m.type==="in").sort((a,b)=>b.date.localeCompare(a.date));
+    el.innerHTML=`<div class="sec-head"><span class="sec-title">📦 Produits</span><button class="btn btn-primary btn-sm" onclick="openModal('modal-add-prod')">+ Nouveau</button></div>${getProducts().map(p=>{const ps=getSales().filter(s=>s.productId===p.id||s.productId===String(p.id));return`<div class="prod-card"><div class="prod-head"><div><div class="prod-name">${p.name}</div>${tag(p.category,"smoke")}</div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="openEditProduct(${p.id})">✎</button><button class="btn btn-red btn-sm" onclick="deleteProduct(${p.id})">✕</button></div></div><div class="prod-grid"><div class="prod-cell"><div class="prod-cell-lbl">Stock actuel</div><div class="prod-cell-val" style="color:${p.stock<=5?"var(--red)":p.stock<=15?"var(--amber)":"var(--green)"}">${p.stock} unités</div></div><div class="prod-cell"><div class="prod-cell-lbl">Prix de revient</div><div class="prod-cell-val">${cfa(p.costPrice)}</div></div><div class="prod-cell"><div class="prod-cell-lbl">Unités vendues</div><div class="prod-cell-val" style="color:var(--blue)">${ps.reduce((a,s)=>a+s.qty,0)}</div></div><div class="prod-cell"><div class="prod-cell-lbl">Bénéfice total</div><div class="prod-cell-val" style="color:var(--green)">${cfa(ps.reduce((a,s)=>a+s.profit,0))}</div></div></div></div>`;}).join("")||`<p class="empty">Aucun produit.</p>`}<div style="font-weight:800;font-size:14px;margin:16px 0 10px">📥 Historique entrées stock</div>${stockIn.length?`<div class="card">${stockIn.map(m=>`<div class="stock-move-item"><div><div style="font-weight:700;font-size:13px">${m.productName}</div><div style="font-size:11px;color:var(--muted)">${m.date} · ${m.note}</div></div>${tag("+"+m.qty+" unités","green")}</div>`).join("")}</div>`:`<p class="empty">Aucune entrée stock.</p>`}`;
+  }
+  else if(currentTab==="stats"){
+    const monthCards=Array.from({length:6},(_,i)=>{const dd=new Date(d.getFullYear(),d.getMonth()-i,1);const k=`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,"0")}`;return monthCardHtml(k,`${MONTHS_FULL[dd.getMonth()]} ${dd.getFullYear()}`,i===0);}).join("");
+    const prodStats=getProducts().map(p=>{const ps=getSales().filter(s=>s.productId===p.id||s.productId===String(p.id));const bg=ps.filter(s=>s.type==="gros").reduce((a,s)=>a+s.profit,0);const bd=ps.filter(s=>s.type==="detail").reduce((a,s)=>a+s.profit,0);return`<tr><td style="font-weight:700">${p.name}</td><td style="font-family:monospace">${ps.reduce((a,s)=>a+s.qty,0)}</td><td style="font-family:monospace;color:var(--violet)">${cfa(bg)}</td><td style="font-family:monospace;color:var(--blue)">${cfa(bd)}</td><td style="font-family:monospace;color:var(--green);font-weight:800">${cfa(bg+bd)}</td></tr>`;}).join("");
+    el.innerHTML=`<div style="font-weight:800;font-size:16px;margin-bottom:14px">📈 Stats mensuelles</div>${monthCards}<div style="font-weight:800;font-size:13px;margin:4px 0 10px">🏆 Par produit</div><div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th>Produit</th><th>Unités</th><th>Bén.Gros</th><th>Bén.Détail</th><th>Total</th></tr></thead><tbody>${prodStats||`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée</td></tr>`}</tbody></table></div>`;
+  }
+  else if(currentTab==="historique"){
+    const rapports=getRapports().sort((a,b)=>b.date.localeCompare(a.date));
+    el.innerHTML=`<div style="font-weight:800;font-size:16px;margin-bottom:14px">🗂 Historique des rapports</div>${rapports.length?rapports.map(r=>`<div class="rday-card" onclick="openRapportDetail('${r._key}')"><div class="rday-head"><span class="rday-date">📋 ${dateLabel(r.date)}</span>${r.source==="zero"?tag("Aucune vente","smoke"):tag((r.totals?.nbVentes||0)+" lignes","smoke")}${r.source==="photo"?tag("📷","teal"):""}</div>${r.source==="zero"?`<div style="color:var(--muted);font-size:12px;padding:4px 0">🏖 Journée sans vente</div>`:`<div class="rday-stats"><div class="rday-stat"><div class="rday-stat-lbl">⬡ Gros</div><div class="rday-stat-val" style="color:var(--violet)">${cfa(r.totals?.benefGros||0)}</div></div><div class="rday-stat"><div class="rday-stat-lbl">◎ Détail</div><div class="rday-stat-val" style="color:var(--blue)">${cfa(r.totals?.benefDetail||0)}</div></div><div class="rday-stat"><div class="rday-stat-lbl">💰 Net</div><div class="rday-stat-val" style="color:var(--green)">${cfa(r.totals?.totalProfit||0)}</div></div></div>${r.totals?.nbCadeaux?`<div style="font-size:10px;color:var(--orange)">🎁 ${r.totals.nbCadeaux} cadeau(x) — Perte: ${cfa(r.totals.perteCadeaux)}</div>`:""}`}<div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:right">Appuyer pour voir le détail →</div></div>`).join(""):`<p class="empty">Aucun rapport validé pour l'instant.</p>`}`;
+  }
+}
+window.render=render;
+
+
+// ── DEPOTS ────────────────────────────────────────────────────────────────────
+let fbDepots = {};
+const getDepots = () => toArr(fbDepots);
+
+function initDepotListener(){
+  onValue(ref(db,"depots"),(snap)=>{ fbDepots=snap.val()||{}; if(role) render(); });
+}
+
+function fbAddDepot(d){ const k=push(ref(db,"depots")).key; return set(ref(db,`depots/${k}`),{...d,_key:k}); }
+function fbUpdateDepot(key,d){ return set(ref(db,`depots/${key}`),d); }
+
+// ── CRÉER DÉPÔT ───────────────────────────────────────────────────────────────
+function openNewDepotModal(){
+  const el=document.getElementById("dp-product");
+  el.innerHTML='<option value="">— Choisir —</option>';
+  getProducts().forEach(p=>{ el.innerHTML+=`<option value="${p.id}">${p.name} (stock: ${p.stock})</option>`; });
+  document.getElementById("dp-date").value=today();
+  ["dp-qty","dp-lieu","dp-note","dp-prix-estime"].forEach(id=>document.getElementById(id).value="");
+  openModal("modal-add-depot");
+}
+window.openNewDepotModal=openNewDepotModal;
+
+async function createDepot(){
+  const lieu=document.getElementById("dp-lieu").value.trim();
+  const pid=document.getElementById("dp-product").value;
+  const qty=+document.getElementById("dp-qty").value;
+  const date=document.getElementById("dp-date").value;
+  const note=document.getElementById("dp-note").value.trim();
+  const prixEstime=+document.getElementById("dp-prix-estime").value;
+  const p=getP(pid);
+  if(!lieu||!p||!qty||!prixEstime)return alert("Remplis tous les champs obligatoires !");
+  if(qty>p.stock)return alert(`Stock insuffisant pour ${p.name} (stock: ${p.stock})`);
+  if(!confirm(`Déposer ${qty} ${p.name} chez "${lieu}" ?
+Sortie du stock immédiate.`))return;
+  await fbSetProduct({...p,stock:p.stock-qty});
+  await fbAddMove({productId:p.id,productName:p.name,type:"out",qty,date,note:"Dépôt-vente: "+lieu});
+  await fbAddDepot({
+    lieu, productId:p.id, productName:p.name, costPrice:p.costPrice,
+    qtyDeposee:qty, qtyRestante:qty, prixEstime,
+    date, note, statut:"ouvert",
+    // CRÉANCE
+    ventesDetectees:[],   // ventes détectées par IA du cahier
+    totalDu:0,            // cumul de ce que le stand doit
+    totalRecu:0,          // cumul des versements reçus
+    versements:[],        // historique des versements
+    beneficeTotal:0,
+    caTotal:0,
+    qtyVendueEstimee:0,
+  });
+  closeModal("modal-add-depot");
+  alert(`✅ Dépôt créé ! ${qty} ${p.name} sortis du stock.`);
+}
+window.createDepot=createDepot;
+
+// ── RAJOUTER STOCK ────────────────────────────────────────────────────────────
+async function rajouterStock(key){
+  const d=getDepots().find(d=>d._key===key); if(!d)return;
+  const qtyStr=prompt(`Quantité à rajouter chez "${d.lieu}" ?
+(Stock dispo: ${getP(d.productId)?.stock||0})`);
+  const qty=+qtyStr;
+  if(!qty||qty<=0)return;
+  const p=getP(d.productId);
+  if(!p||qty>p.stock)return alert("Stock insuffisant !");
+  await fbSetProduct({...p,stock:p.stock-qty});
+  await fbAddMove({productId:p.id,productName:p.name,type:"out",qty,date:today(),note:"Rajout dépôt: "+d.lieu});
+  await fbUpdateDepot(key,{...d,qtyDeposee:d.qtyDeposee+qty,qtyRestante:(d.qtyRestante||0)+qty});
+  alert(`✅ ${qty} unités ajoutées au dépôt "${d.lieu}".`);
+}
+window.rajouterStock=rajouterStock;
+
+// ── VERSEMENT REÇU ────────────────────────────────────────────────────────────
+function openVersement(key){
+  const d=getDepots().find(d=>d._key===key); if(!d)return;
+  const solde=(d.totalDu||0)-(d.totalRecu||0);
+  document.getElementById("mrd2-title").textContent="💰 Versement — "+d.lieu;
+  document.getElementById("mrd2-body").innerHTML=`
+    <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:13px;margin-bottom:8px">${d.productName} · ${d.lieu}</div>
+      <div class="grid3">
+        <div class="prod-cell"><div class="prod-cell-lbl">Total dû</div><div class="prod-cell-val" style="color:var(--blue)">${cfa(Math.round(d.totalDu||0))}</div></div>
+        <div class="prod-cell"><div class="prod-cell-lbl">Déjà reçu</div><div class="prod-cell-val" style="color:var(--green)">${cfa(Math.round(d.totalRecu||0))}</div></div>
+        <div class="prod-cell" style="border:1px solid ${solde>0?"#f59e0b33":"#22c55e33"}"><div class="prod-cell-lbl">Solde restant</div><div class="prod-cell-val" style="color:${solde>0?"var(--amber)":"var(--green)"}">${cfa(Math.round(solde))}</div></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>💰 Montant versé (F CFA)</label>
+      <input type="number" id="vs-montant" min="0" placeholder="ex: 45000" oninput="previewVersement('${key}')"/>
+    </div>
+    <div class="field" style="margin-top:8px"><label>Date</label><input type="date" id="vs-date" value="${today()}"/></div>
+    <div class="field" style="margin-top:8px"><label>Note (optionnel)</label><input type="text" id="vs-note" placeholder="ex: Versement semaine 1"/></div>
+    <div id="vs-preview" style="margin-top:12px;display:none"></div>
+  `;
+  document.getElementById("mrd2-footer").innerHTML=`
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-retour-depot')">Annuler</button>
+    <button class="btn btn-green" style="flex:2" onclick="confirmerVersement('${key}')">✅ Confirmer versement</button>
+  `;
+  openModal("modal-retour-depot");
+}
+window.openVersement=openVersement;
+
+function previewVersement(key){
+  const d=getDepots().find(d=>d._key===key); if(!d)return;
+  const montant=+document.getElementById("vs-montant")?.value||0;
+  const el=document.getElementById("vs-preview"); if(!el)return;
+  if(!montant){el.style.display="none";return;}
+  // Marge = montant reçu - (unités estimées × coût)
+  const unitsEst=montant/d.prixEstime;
+  const margeEst=montant-(unitsEst*d.costPrice);
+  const soldeApres=Math.max(0,(d.totalDu||0)-(d.totalRecu||0)-montant);
+  el.style.display="block";
+  el.innerHTML=`<div style="background:var(--bg);border-radius:10px;padding:12px;border:1px solid #22c55e33">
+    <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:10px">📊 Calcul automatique</div>
+    <div class="grid2" style="gap:8px">
+      <div class="prod-cell"><div class="prod-cell-lbl">Unités vendues est.</div><div class="prod-cell-val" style="color:var(--blue)">≈${unitsEst.toFixed(1)}</div></div>
+      <div class="prod-cell"><div class="prod-cell-lbl">Solde restant après</div><div class="prod-cell-val" style="color:var(--amber)">${cfa(Math.round(soldeApres))}</div></div>
+      <div class="prod-cell"><div class="prod-cell-lbl">Ta marge sur ce versement</div><div class="prod-cell-val" style="color:var(--green)">≈+${cfa(Math.round(margeEst))}</div></div>
+      <div class="prod-cell"><div class="prod-cell-lbl">Prix estimé/u</div><div class="prod-cell-val">${cfa(d.prixEstime)}</div></div>
+    </div>
+  </div>`;
+}
+window.previewVersement=previewVersement;
+
+async function confirmerVersement(key){
+  const d=getDepots().find(d=>d._key===key); if(!d)return;
+  const montant=+document.getElementById("vs-montant").value;
+  const dateVs=document.getElementById("vs-date").value;
+  const noteVs=document.getElementById("vs-note").value.trim();
+  if(!montant||montant<=0)return alert("Saisis un montant valide !");
+  const unitsEst=montant/d.prixEstime;
+  const margeEst=montant-(unitsEst*d.costPrice);
+  const versements=[...(d.versements||[]),{montant,unitsEstimees:+unitsEst.toFixed(2),margeEstimee:+margeEst.toFixed(0),date:dateVs,note:noteVs}];
+  await fbUpdateDepot(key,{...d,
+    versements,
+    totalRecu:(d.totalRecu||0)+montant,
+    beneficeTotal:(d.beneficeTotal||0)+margeEst,
+    qtyVendueEstimee:(d.qtyVendueEstimee||0)+unitsEst,
+    qtyRestante:Math.max(0,(d.qtyRestante||0)-unitsEst),
+    statut:((d.totalDu||0)-(d.totalRecu||0)-montant)<=0&&(d.qtyRestante||0)<=unitsEst?"cloture":"ouvert"
+  });
+  await fbAddSale({productId:+d.productId,productName:d.productName,qty:+unitsEst.toFixed(2),salePrice:d.prixEstime,costPrice:d.costPrice,type:"depot",date:dateVs,profit:+margeEst.toFixed(0),depotLieu:d.lieu,isEstimation:true});
+  closeModal("modal-retour-depot");
+  alert(`✅ Versement de ${cfa(montant)} enregistré !
+Marge estimée : ≈+${cfa(Math.round(margeEst))}`);
+}
+window.confirmerVersement=confirmerVersement;
+
+// ── RETOUR PHYSIQUE ────────────────────────────────────────────────────────────
+function openRetourPhysique(key){
+  const d=getDepots().find(d=>d._key===key); if(!d)return;
+  document.getElementById("mrd2-title").textContent="↩️ Retour — "+d.lieu;
+  document.getElementById("mrd2-body").innerHTML=`
+    <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:13px;margin-bottom:6px">${d.productName} · ${d.lieu}</div>
+      <div style="font-size:12px;color:var(--muted)">Restant estimé : <strong style="color:var(--amber)">${(d.qtyRestante||0).toFixed(0)} unités</strong></div>
+    </div>
+    <div class="field"><label>Quantité physiquement récupérée</label><input type="number" id="rp-qty" min="1" placeholder="ex: 5"/></div>
+    <div class="field" style="margin-top:8px"><label>Date</label><input type="date" id="rp-date" value="${today()}"/></div>
+  `;
+  document.getElementById("mrd2-footer").innerHTML=`
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-retour-depot')">Annuler</button>
+    <button class="btn btn-amber" style="flex:2" onclick="confirmerRetourPhysique('${key}')">↩️ Confirmer retour</button>
+  `;
+  openModal("modal-retour-depot");
+}
+window.openRetourPhysique=openRetourPhysique;
+
+async function confirmerRetourPhysique(key){
+  const d=getDepots().find(d=>d._key===key); if(!d)return;
+  const qty=+document.getElementById("rp-qty").value;
+  const dateRp=document.getElementById("rp-date").value;
+  if(!qty||qty<=0)return alert("Indique une quantité valide !");
+  const p=getP(d.productId);
+  if(p) await fbSetProduct({...p,stock:p.stock+qty});
+  await fbAddMove({productId:d.productId,productName:d.productName,type:"in",qty,date:dateRp,note:"Retour dépôt: "+d.lieu});
+  const versements=[...(d.versements||[]),{type:"retour",qty,date:dateRp}];
+  const newRestante=Math.max(0,(d.qtyRestante||0)-qty);
+  await fbUpdateDepot(key,{...d,qtyRestante:newRestante,versements,statut:newRestante<=0?"cloture":"ouvert"});
+  closeModal("modal-retour-depot");
+  alert(`✅ ${qty} unités retournées au stock.`);
+}
+window.confirmerRetourPhysique=confirmerRetourPhysique;
+
+// ── SCAN PHOTO IA — VENTES DÉPÔTS INCLUSES ────────────────────────────────────
+function buildPhotoPrompt(){
+  const productList=getProducts().map(p=>`- "${p.name}" (id:${p.id})`).join("\n");
+  const depotList=getDepots().filter(d=>d.statut==="ouvert").map(d=>`- Stand "${d.lieu}" produit "${d.productName}" (key:${d._key})`).join("\n");
+  return `Tu analyses un rapport de vente écrit à la main.
+
+Produits disponibles:
+${productList}
+
+Stands de dépôt-vente actifs:
+${depotList||"(aucun)"}
+
+Identifie TOUTES les transactions:
+1. Ventes directes (gros/détail): {"type":"vente","ventType":"gros" ou "detail","productId":N,"productName":"...","qty":N,"price":N}
+2. Ventes dans un stand de dépôt: {"type":"depot_vente","depotKey":"...","depotLieu":"...","productName":"...","qty":N,"price":N}
+
+Réponds UNIQUEMENT en JSON valide sans markdown:
+{"transactions":[...],"note":""}`;
+}
+
+// Ajoute une vente détectée à la créance d'un dépôt
+async function ajouterVenteDepot(depotKey, qty, price, date, source){
+  const d=getDepots().find(d=>d._key===depotKey); if(!d)return;
+  const ca=qty*price;
+  const marge=qty*(price-d.costPrice);
+  const vente={qty,price,ca,marge,date,source};
+  const ventesDetectees=[...(d.ventesDetectees||[]),vente];
+  const newTotalDu=(d.totalDu||0)+ca;
+  const newQtyVendue=(d.qtyVendueEstimee||0)+qty;
+  const newRestante=Math.max(0,(d.qtyRestante||0)-qty);
+  await fbUpdateDepot(depotKey,{...d,ventesDetectees,totalDu:newTotalDu,qtyVendueEstimee:newQtyVendue,qtyRestante:newRestante});
+  // Ajouter aussi aux ventes globales (non encore payées — profit=0 jusqu'au versement)
+  await fbAddSale({productId:+d.productId,productName:d.productName,qty,salePrice:price,costPrice:d.costPrice,type:"depot",date,profit:+marge.toFixed(0),depotLieu:d.lieu,isEstimation:false,attendVersement:true});
+}
+
+async function handlePhoto(event){
+  const file=event.target.files[0]; if(!file)return;
+  event.target.value="";
+  const base64=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(",")[1]);r.readAsDataURL(file);});
+  document.getElementById("scan-overlay").style.display="flex";
+  try{
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:base64}},{type:"text",text:buildPhotoPrompt()}]}]})});
+    const data=await resp.json();
+    document.getElementById("scan-overlay").style.display="none";
+    if(data.error){alert("Erreur IA : "+data.error.message);return;}
+    const text=data.content.map(c=>c.text||"").join("");
+    const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
+    if(!parsed.transactions||!parsed.transactions.length){
+      alert("Aucune transaction détectée.");rapportMode="manual";render();return;
+    }
+    // Ventes normales → rapport journalier
+    const ventesNormales=parsed.transactions.filter(t=>t.type==="vente");
+    currentRapport.ventes=ventesNormales.map(v=>({
+      id:Date.now()+Math.random(),
+      productId:String(v.productId),
+      productName:v.productName||getP(v.productId)?.name||"",
+      qty:+v.qty||1,price:+v.price||0,type:v.ventType||"detail"
+    }));
+    // Ventes dépôts → créances
+    const ventesDepots=parsed.transactions.filter(t=>t.type==="depot_vente");
+    if(ventesDepots.length){
+      const lignes=ventesDepots.map(v=>`• ${v.depotLieu} : ${v.qty} × ${cfa(v.price)}`).join("\n");
+      const ok=confirm(`L'IA a détecté ces ventes de dépôt :\n${lignes}\n\nLes ajouter aux créances des stands ?`);
+      if(ok){
+        for(const v of ventesDepots){
+          // Trouver le dépôt par key ou par nom
+          const d=getDepots().find(d=>d._key===v.depotKey||d.lieu.toLowerCase().includes((v.depotLieu||"").toLowerCase()));
+          if(d) await ajouterVenteDepot(d._key,+v.qty,+v.price,today(),"Scan photo");
+          else alert(`Stand "${v.depotLieu}" non trouvé. Crée d'abord le dépôt.`);
+        }
+        alert("✅ Créances des stands mises à jour !");
+      }
+    }
+    if(parsed.note)alert("📝 Note IA : "+parsed.note);
+    rapportMode="manual"; render();
+    setTimeout(()=>currentRapport.ventes.forEach(v=>refreshPreview(v.id)),100);
+  }catch(err){
+    document.getElementById("scan-overlay").style.display="none";
+    alert("Erreur : "+err.message);
+  }
+}
+window.handlePhoto=handlePhoto;
+
+// ── RENDER DEPOTS ─────────────────────────────────────────────────────────────
+function renderDepots(){
+  const el=document.getElementById("content");
+  const depots=getDepots().sort((a,b)=>b.date.localeCompare(a.date));
+  const ouverts=depots.filter(d=>d.statut==="ouvert");
+  const clotures=depots.filter(d=>d.statut!=="ouvert");
+
+  function depotCardHtml(d){
+    const solde=(d.totalDu||0)-(d.totalRecu||0);
+    const qtyRestante=+(d.qtyRestante||0).toFixed(1);
+    const qtyVendueEst=+(d.qtyVendueEstimee||0).toFixed(1);
+    const pctVendu=Math.min(100,Math.round((qtyVendueEst/d.qtyDeposee)*100));
+    const isOpen=d.statut==="ouvert";
+    return `<div class="depot-card ${isOpen?"depot-card-open":"depot-card-closed"}">
+      <div class="depot-head">
+        <div>
+          <div class="depot-lieu">🏪 ${d.lieu}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${d.productName} · Depuis le ${d.date}</div>
+        </div>
+        ${tag(isOpen?"Ouvert":"Clôturé",isOpen?"amber":"green")}
+      </div>
+      <!-- Barre progression -->
+      <div class="depot-progress">
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+          <span style="color:var(--muted)">Unités vendues estimées</span>
+          <span style="font-weight:800;color:var(--green)">${pctVendu}%</span>
+        </div>
+        <div class="depot-progress-bar"><div class="depot-progress-fill" style="width:${pctVendu}%"></div></div>
+      </div>
+      <!-- Stats stock -->
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="prod-cell"><div class="prod-cell-lbl">Déposé</div><div class="prod-cell-val">${d.qtyDeposee}</div></div>
+        <div class="prod-cell"><div class="prod-cell-lbl">Vendu est.</div><div class="prod-cell-val" style="color:var(--green)">≈${qtyVendueEst}</div></div>
+        <div class="prod-cell"><div class="prod-cell-lbl">Restant est.</div><div class="prod-cell-val" style="color:var(--amber)">≈${qtyRestante}</div></div>
+      </div>
+      <!-- CRÉANCE -->
+      <div style="background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid ${solde>0?"#f59e0b33":"#22c55e33"}">
+        <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:8px">💳 Créance</div>
+        <div class="grid3">
+          <div class="prod-cell"><div class="prod-cell-lbl">Total dû</div><div class="prod-cell-val" style="color:var(--blue)">${cfa(Math.round(d.totalDu||0))}</div></div>
+          <div class="prod-cell"><div class="prod-cell-lbl">Reçu</div><div class="prod-cell-val" style="color:var(--green)">${cfa(Math.round(d.totalRecu||0))}</div></div>
+          <div class="prod-cell" style="border:1px solid ${solde>0?"#f59e0b33":"#22c55e33"}"><div class="prod-cell-lbl">Solde</div><div class="prod-cell-val" style="color:${solde>0?"var(--amber)":"var(--green)"}">${cfa(Math.round(solde))}</div></div>
+        </div>
+      </div>
+      <!-- Marge estimée -->
+      <div style="background:var(--bg);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between">
+        <span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase">Marge estimée totale</span>
+        <span style="font-family:monospace;font-weight:800;color:var(--green)">≈+${cfa(Math.round(d.beneficeTotal||0))}</span>
+      </div>
+      <!-- Actions -->
+      ${isOpen?`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <button class="btn btn-green btn-sm" onclick="openVersement('${d._key}')">💰 Versement reçu</button>
+        <button class="btn btn-ghost btn-sm" onclick="openRetourPhysique('${d._key}')">↩️ Retour physique</button>
+      </div>
+      <button class="btn btn-amber btn-sm btn-full" onclick="rajouterStock('${d._key}')">📦 Rajouter du stock</button>`
+      :`<div style="font-size:11px;color:var(--muted);text-align:center;padding:4px 0">Dépôt clôturé</div>`}
+      <!-- Historique ventes détectées -->
+      ${(d.ventesDetectees&&d.ventesDetectees.length)?`
+      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">📋 Ventes détectées (cahier)</div>
+        ${d.ventesDetectees.map(v=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:11px;border-bottom:1px solid #1e2d3d22">
+            <span style="color:var(--muted)">${v.date}</span>
+            <span>${v.qty} × ${cfa(v.price)}</span>
+            <span style="font-family:monospace;font-weight:800;color:var(--blue)">${cfa(Math.round(v.ca))}</span>
+          </div>`).join("")}
+      </div>`:""}
+      <!-- Historique versements -->
+      ${(d.versements&&d.versements.filter(v=>!v.type).length)?`
+      <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">💰 Versements reçus</div>
+        ${d.versements.filter(v=>!v.type).map(v=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:11px;border-bottom:1px solid #1e2d3d22">
+            <span style="color:var(--muted)">${v.date}</span>
+            <span>${v.note||"Versement"}</span>
+            <span style="font-family:monospace;font-weight:800;color:var(--green)">${cfa(v.montant)}</span>
+          </div>`).join("")}
+      </div>`:""}
+    </div>`;
+  }
+
+  const totalDuGlobal=depots.reduce((a,d)=>a+(d.totalDu||0),0);
+  const totalRecuGlobal=depots.reduce((a,d)=>a+(d.totalRecu||0),0);
+  const soldeGlobal=totalDuGlobal-totalRecuGlobal;
+
+  el.innerHTML=`
+    <div class="sec-head"><span class="sec-title">🏪 Dépôts-vente</span><button class="btn btn-amber btn-sm" onclick="openNewDepotModal()">+ Nouveau dépôt</button></div>
+    ${depots.length?`
+    <div style="background:var(--bg2);border:1px solid ${soldeGlobal>0?"#f59e0b44":"#22c55e44"};border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:10px">💳 Créances globales tous stands</div>
+      <div class="grid3">
+        <div class="prod-cell"><div class="prod-cell-lbl">Total dû</div><div class="prod-cell-val" style="color:var(--blue)">${cfa(Math.round(totalDuGlobal))}</div></div>
+        <div class="prod-cell"><div class="prod-cell-lbl">Total reçu</div><div class="prod-cell-val" style="color:var(--green)">${cfa(Math.round(totalRecuGlobal))}</div></div>
+        <div class="prod-cell" style="border:1px solid ${soldeGlobal>0?"#f59e0b33":"#22c55e33"}"><div class="prod-cell-lbl">À recevoir</div><div class="prod-cell-val" style="color:${soldeGlobal>0?"var(--amber)":"var(--green)"}">${cfa(Math.round(soldeGlobal))}</div></div>
+      </div>
+    </div>`:""}
+    ${ouverts.length?`<div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">⏳ En cours (${ouverts.length})</div>${ouverts.map(depotCardHtml).join("")}`:""}
+    ${clotures.length?`<div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin:${ouverts.length?"14px":"0"} 0 10px">✅ Clôturés (${clotures.length})</div>${clotures.map(depotCardHtml).join("")}`:""}
+    ${!depots.length?`<div class="empty">Aucun dépôt-vente.<br>Crée ton premier dépôt ci-dessus.</div>`:""}
+  `;
+}
+window.renderDepots=renderDepots;
+
+
+
+
+// ── DÉPENSES ──────────────────────────────────────────────────────────────────
+let fbDepenses = {};
+const getDepenses = () => toArr(fbDepenses);
+let depLignesTmp = []; // lignes en cours de saisie
+let editDepensesKey = null;
+let editDepLignes = [];
+
+function initDepensesListener(){
+  onValue(ref(db,"depenses"),(snap)=>{ fbDepenses=snap.val()||{}; if(role) render(); });
+}
+function fbAddDepenses(d){ const k=push(ref(db,"depenses")).key; return set(ref(db,`depenses/${k}`),{...d,_key:k}); }
+function fbUpdateDepenses(key,d){ return set(ref(db,`depenses/${key}`),d); }
+function fbDeleteDepenses(key){ return remove(ref(db,`depenses/${key}`)); }
+
+// ── MODAL NOUVELLE SAISIE ─────────────────────────────────────────────────────
+function openAddDepenses(){
+  depLignesTmp=[{id:Date.now(),categorie:"",montant:""}];
+  const now=new Date();
+  document.getElementById("dep-mois").value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  renderDepLignes();
+  openModal("modal-add-depenses");
+}
+window.openAddDepenses=openAddDepenses;
+
+function addDepenseLigne(){
+  depLignesTmp.push({id:Date.now(),categorie:"",montant:""});
+  renderDepLignes();
+}
+window.addDepenseLigne=addDepenseLigne;
+
+function removeDepLigne(id){
+  depLignesTmp=depLignesTmp.filter(l=>l.id!==id);
+  renderDepLignes();
+}
+window.removeDepLigne=removeDepLigne;
+
+function updateDepLigne(id,field,val){
+  const l=depLignesTmp.find(l=>l.id===id); if(!l)return;
+  l[field]=val;
+}
+window.updateDepLigne=updateDepLigne;
+
+function ligneTmpHtml(l,prefix="dep"){
+  return `<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+    <div class="field"><label>Catégorie</label><input type="text" value="${l.categorie}" placeholder="ex: Loyer" oninput="update${prefix==="dep"?"Dep":"EditDep"}Ligne(${l.id},'categorie',this.value)"/></div>
+    <div class="field"><label>Montant (F)</label><input type="number" value="${l.montant}" placeholder="0" oninput="update${prefix==="dep"?"Dep":"EditDep"}Ligne(${l.id},'montant',this.value)"/></div>
+    <button onclick="remove${prefix==="dep"?"Dep":"EditDep"}Ligne(${l.id})" style="background:var(--red)22;border:1px solid var(--red)44;color:var(--red);border-radius:8px;padding:10px 8px;cursor:pointer;font-size:14px;margin-bottom:0">✕</button>
+  </div>`;
+}
+
+function renderDepLignes(){
+  document.getElementById("dep-lignes").innerHTML=depLignesTmp.map(l=>ligneTmpHtml(l,"dep")).join("");
+}
+
+async function saveDepenses(){
+  const mois=document.getElementById("dep-mois").value;
+  if(!mois)return alert("Choisis un mois !");
+  const lignes=depLignesTmp.filter(l=>l.categorie&&+l.montant>0);
+  if(!lignes.length)return alert("Ajoute au moins une dépense avec un montant.");
+  const total=lignes.reduce((a,l)=>a+(+l.montant),0);
+  // Vérifier si ce mois existe déjà
+  const existing=getDepenses().find(d=>d.mois===mois);
+  if(existing){ if(!confirm(`Des dépenses existent déjà pour ${moisLabel(mois)}. Remplacer ?`))return; await fbDeleteDepenses(existing._key); }
+  await fbAddDepenses({mois,lignes:lignes.map(l=>({categorie:l.categorie,montant:+l.montant})),total,dateCreation:today()});
+  depLignesTmp=[];
+  closeModal("modal-add-depenses");
+  alert("✅ Dépenses enregistrées !");
+}
+window.saveDepenses=saveDepenses;
+
+// ── EDIT DÉPENSES ─────────────────────────────────────────────────────────────
+function openEditDepenses(key){
+  const d=getDepenses().find(d=>d._key===key); if(!d)return;
+  editDepensesKey=key;
+  editDepLignes=(d.lignes||[]).map(l=>({...l,id:Date.now()+Math.random()}));
+  document.getElementById("med-title").textContent=`✎ ${moisLabel(d.mois)}`;
+  renderEditDepLignes();
+  openModal("modal-edit-depenses");
+}
+window.openEditDepenses=openEditDepenses;
+
+function addEditDepenseLigne(){
+  editDepLignes.push({id:Date.now(),categorie:"",montant:""});
+  renderEditDepLignes();
+}
+window.addEditDepenseLigne=addEditDepenseLigne;
+
+function removeEditDepLigne(id){
+  editDepLignes=editDepLignes.filter(l=>l.id!==id);
+  renderEditDepLignes();
+}
+window.removeEditDepLigne=removeEditDepLigne;
+
+function updateEditDepLigne(id,field,val){
+  const l=editDepLignes.find(l=>l.id===id); if(!l)return;
+  l[field]=val;
+}
+window.updateEditDepLigne=updateEditDepLigne;
+
+function renderEditDepLignes(){
+  document.getElementById("med-lignes").innerHTML=editDepLignes.map(l=>ligneTmpHtml(l,"edit")).join("");
+}
+
+async function saveEditDepenses(){
+  const lignes=editDepLignes.filter(l=>l.categorie&&+l.montant>0);
+  if(!lignes.length)return alert("Ajoute au moins une dépense.");
+  const total=lignes.reduce((a,l)=>a+(+l.montant),0);
+  const d=getDepenses().find(d=>d._key===editDepensesKey);
+  await fbUpdateDepenses(editDepensesKey,{...d,lignes:lignes.map(l=>({categorie:l.categorie,montant:+l.montant})),total});
+  closeModal("modal-edit-depenses");
+  alert("✅ Dépenses modifiées !");
+}
+window.saveEditDepenses=saveEditDepenses;
+
+async function deleteDepenses(key){
+  if(!confirm("Supprimer ces dépenses ?"))return;
+  await fbDeleteDepenses(key);
+}
+window.deleteDepenses=deleteDepenses;
+
+// ── UTILS DÉPENSES ────────────────────────────────────────────────────────────
+function moisLabel(moisStr){
+  if(!moisStr)return"";
+  const [y,m]=moisStr.split("-");
+  return `${MONTHS_FULL[+m-1]} ${y}`;
+}
+
+function getDepensesForMonth(key){ // key = "2025-06"
+  return getDepenses().find(d=>d.mois===key);
+}
+
+// ── CAPITAL MARCHANDISE ───────────────────────────────────────────────────────
+function calcCapital(){
+  return getProducts().reduce((a,p)=>a+(p.stock*p.costPrice),0);
+}
+
+// Bénéfice réel = bénéfice ventes - dépenses du mois
+function getBeneficeReel(moisKey){
+  const mStats=monthStats(moisKey);
+  const dep=getDepensesForMonth(moisKey);
+  return mStats.profit-(dep?.total||0);
+}
+
+// ── RENDER DÉPENSES ───────────────────────────────────────────────────────────
+function renderDepenses(){
+  const el=document.getElementById("content");
+  const depenses=[...getDepenses()].sort((a,b)=>b.mois.localeCompare(a.mois));
+  const d=new Date();
+  const mk=nowMK();
+
+  // Bilan du mois en cours
+  const mStats=monthStats(mk);
+  const depMois=getDepensesForMonth(mk);
+  const totalDepMois=depMois?.total||0;
+  const benefVentes=mStats.profit;
+  const benefDepots=getDepots().reduce((a,dep)=>{
+    const ventesDepotMois=dep.ventesDetectees?.filter(v=>v.date&&v.date.startsWith(mk))||[];
+    return a+ventesDepotMois.reduce((s,v)=>s+v.marge,0);
+  },0);
+  const totalBenefBrut=benefVentes+benefDepots;
+  const beneficeReel=totalBenefBrut-totalDepMois;
+  const capital=calcCapital();
+
+  el.innerHTML=`
+    <div class="sec-head"><span class="sec-title">💸 Dépenses & Bilan</span><button class="btn btn-red btn-sm" onclick="openAddDepenses()">+ Saisir dépenses</button></div>
+
+    <!-- CAPITAL MARCHANDISE -->
+    <div style="background:var(--bg2);border:1px solid #8b5cf644;border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:10px;font-weight:800;color:var(--violet);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📦 Capital marchandise immobilisé</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-weight:800;font-size:24px;color:var(--violet);margin-bottom:8px">${cfa(capital)}</div>
+      <div style="overflow-x:auto"><table class="tbl">
+        <thead><tr><th>Produit</th><th>Stock</th><th>Prix revient</th><th>Valeur</th></tr></thead>
+        <tbody>${getProducts().map(p=>`<tr>
+          <td style="font-weight:600">${p.name}</td>
+          <td style="font-family:monospace">${p.stock}</td>
+          <td style="font-family:monospace">${cfa(p.costPrice)}</td>
+          <td style="font-family:monospace;font-weight:800;color:var(--violet)">${cfa(p.stock*p.costPrice)}</td>
+        </tr>`).join("")}</tbody>
+        <tfoot><tr>
+          <td colspan="3" style="color:var(--muted);font-size:11px">TOTAL CAPITAL</td>
+          <td style="font-family:monospace;color:var(--violet);font-size:14px">${cfa(capital)}</td>
+        </tr></tfoot>
+      </table></div>
+    </div>
+
+    <!-- BILAN MOIS EN COURS -->
+    <div class="bilan-card" style="border-color:#22c55e44">
+      <div style="font-size:10px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">📊 Bilan réel — ${moisLabel(mk)}</div>
+      <div class="bilan-row"><span class="bilan-label">Bénéfice ventes directes</span><span class="bilan-val" style="color:var(--green)">+${cfa(Math.round(benefVentes))}</span></div>
+      <div class="bilan-row"><span class="bilan-label">Marge dépôts-vente (estimée)</span><span class="bilan-val" style="color:var(--blue)">+${cfa(Math.round(benefDepots))}</span></div>
+      <div class="bilan-row" style="border-color:var(--red)44"><span class="bilan-label">Total dépenses</span><span class="bilan-val" style="color:var(--red)">-${cfa(totalDepMois)}</span></div>
+      <div class="bilan-total">
+        <span class="bilan-total-label">Bénéfice net réel</span>
+        <span class="bilan-total-val" style="color:${beneficeReel>=0?"var(--green)":"var(--red)"}">${beneficeReel>=0?"+":""}${cfa(Math.round(beneficeReel))}</span>
+      </div>
+      ${!depMois?`<div style="margin-top:10px;font-size:11px;color:var(--amber);background:#f59e0b14;border-radius:8px;padding:8px 10px">⚠️ Aucune dépense saisie pour ce mois — le bénéfice réel est incomplet.</div>`:""}
+    </div>
+
+    <!-- HISTORIQUE DÉPENSES -->
+    <div style="font-weight:800;font-size:14px;margin-bottom:10px">📋 Historique des dépenses</div>
+    ${depenses.length?depenses.map(dep=>{
+      const mBenef=monthStats(dep.mois).profit;
+      const reel=mBenef-(dep.total||0);
+      return `<div class="depense-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:800;font-size:14px">${moisLabel(dep.mois)}</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="openEditDepenses('${dep._key}')">✎</button>
+            <button class="btn btn-red btn-sm" onclick="deleteDepenses('${dep._key}')">✕</button>
+          </div>
+        </div>
+        ${(dep.lignes||[]).map(l=>`<div class="depense-row"><span class="depense-cat">${l.categorie}</span><span class="depense-montant">-${cfa(l.montant)}</span></div>`).join("")}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;border-top:2px solid var(--border);margin-top:4px">
+          <span style="font-size:11px;font-weight:800;color:var(--muted)">TOTAL DÉPENSES</span>
+          <span style="font-family:monospace;font-weight:800;color:var(--red);font-size:14px">-${cfa(dep.total)}</span>
+        </div>
+        <div style="background:var(--bg);border-radius:9px;padding:10px 12px;margin-top:8px">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:6px">Bilan du mois</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">Bénéfice ventes</span><span style="font-family:monospace;font-weight:700;color:var(--green)">+${cfa(Math.round(mBenef))}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--muted)">Dépenses</span><span style="font-family:monospace;font-weight:700;color:var(--red)">-${cfa(dep.total)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+            <span>Bénéfice net</span>
+            <span style="font-family:monospace;color:${reel>=0?"var(--green)":"var(--red)"}">${reel>=0?"+":""}${cfa(Math.round(reel))}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join(""):`<p class="empty">Aucune dépense enregistrée.<br>Appuie sur "+ Saisir dépenses" pour commencer.</p>`}
+  `;
+}
+window.renderDepenses=renderDepenses;
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}
+
+// ── EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE FOR onclick HANDLERS ─────────────────
+// Safari with type=module needs explicit global assignment
+Object.assign(window, {
+  selectRole, backToSelect, doLogin, logout, goTab,
+  openModal, closeModal, recordStockIn,
+  addProduct, openEditProduct, saveEditProduct, deleteProduct,
+  addVente, removeVente, updateVente, validerRapport, validerJourneeVide,
+  triggerPhoto, handlePhoto, openRapportDetail, openEditRapport,
+  addEditVente, removeEditVente, updateEditVente, saveEditRapport,
+  openNewDepotModal, createDepot, rajouterStock,
+  openVersement, previewVersement, confirmerVersement,
+  openRetourPhysique, confirmerRetourPhysique,
+  ajouterVenteDepot, renderDepots,
+  openAddDepenses, addDepenseLigne, removeDepLigne, updateDepLigne, saveDepenses,
+  openEditDepenses, addEditDepenseLigne, removeEditDepLigne, updateEditDepLigne,
+  saveEditDepenses, deleteDepenses, renderDepenses,
+  render, renderRapport,
+});
+
+initFirebase();
+document.getElementById("app").style.display="none";
+document.getElementById("login-screen").style.display="flex";
+</script>
+</body>
+</html>
